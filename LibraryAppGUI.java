@@ -75,6 +75,7 @@ public class LibraryAppGUI extends Application {
         contentLayout.setStyle("-fx-padding: 20px;");
 
         // Ảnh nền
+        StackPane root = new StackPane();
         ImageView bgView = null;
         URL imageUrl = getClass().getResource("/images/background.jpg");
         if (imageUrl == null) {
@@ -82,13 +83,11 @@ public class LibraryAppGUI extends Application {
         } else {
             Image bgImage = new Image(imageUrl.toExternalForm());
             bgView = new ImageView(bgImage);
-            bgView.setFitWidth(800);
-            bgView.setFitHeight(600);
-            bgView.setPreserveRatio(false);
+            bgView.fitWidthProperty().bind(root.widthProperty());
+            bgView.fitHeightProperty().bind(root.heightProperty());
         }
 
         // StackPane để chồng nền và nội dung
-        StackPane root = new StackPane();
         if (bgView != null) {
             root.getChildren().addAll(bgView, contentLayout);
         } else {
@@ -238,12 +237,21 @@ public class LibraryAppGUI extends Application {
     }
 
     private void removeDocument() {
-        Document doc = library.findDocument("Java Programming");
-        if (doc != null) {
-            library.removeDocument(doc.getTitle());
-            documentList.setAll(library.getDocuments());
-            System.out.println("Document removed.");
-        }
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Remove Document");
+        dialog.setHeaderText("Enter document title to remove:");
+        dialog.setContentText("Title:");
+
+        dialog.showAndWait().ifPresent(title -> {
+            Document doc = library.findDocument(title);
+            if (doc != null) {
+                library.removeDocument(doc.getTitle());
+                documentList.setAll(library.getDocuments());
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Document removed successfully.");
+            } else {
+                showAlert(Alert.AlertType.WARNING, "Not Found", "Document with the title \"" + title + "\" not found.");
+            }
+        });
     }
 
     private void updateDocument() {
@@ -326,7 +334,7 @@ public class LibraryAppGUI extends Application {
     public static void main(String[] args) {
         launch(args);
     }
-    
+
     private void showAlert(Alert.AlertType type, String title, String content) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
