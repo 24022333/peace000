@@ -1,0 +1,74 @@
+/* Áp dụng font chữ đẹp và màu nền tối */
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-background-color: rgba(0, 0, 0, 0.7); /* Nền bán trong suốt nếu có ảnh nền */
+    -fx-text-fill: #f0f0f0;
+}
+
+/* Nút - bo tròn, màu nổi bật */
+.button {
+    -fx-background-color: linear-gradient(to bottom, #3c8dbc, #1c6ea4);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+}
+
+/* Nút khi hover */
+.button:hover {
+    -fx-background-color: linear-gradient(to bottom, #5ca3d1, #2e82bc);
+}
+
+/* Bảng dữ liệu */
+.table-view {
+    -fx-background-color: #2b2b2b;
+    -fx-border-color: #555;
+    -fx-border-radius: 5;
+    -fx-table-cell-border-color: #555;
+    -fx-table-header-border-color: #555;
+}
+
+/* Header của bảng */
+.table-view .column-header-background {
+    -fx-background-color: #1e1e1e;
+}
+
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: #1e1e1e;
+    -fx-border-color: #555;
+    -fx-border-width: 0 0 1 1;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+/* Các ô trong bảng - viền rõ từng ô */
+.table-cell {
+    -fx-border-color: #444;
+    -fx-border-width: 0 1 1 0; /* viền phải và dưới */
+    -fx-padding: 8px;
+    -fx-text-fill: white;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-color: transparent;
+}
+
+/* Dòng của bảng */
+.table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: #444;
+}
+
+/* Khi chọn ô */
+.table-row-cell:filled:selected, .table-cell:filled:selected {
+    -fx-background-color: #3c8dbc;
+    -fx-text-fill: white;
+}
+
+/* Bố cục HBox và VBox */
+.hbox, .vbox {
+    -fx-spacing: 10px;
+}
