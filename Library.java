@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Library {
     private List<Document> documents = new ArrayList<>();
+    private List<User> users = new ArrayList<>(); // ✅ Thêm danh sách người dùng
 
     // Thêm tài liệu
     public void addDocument(Document doc) {
@@ -22,6 +23,26 @@ public class Library {
                 .filter(doc -> doc.getTitle().equals(title))
                 .findFirst()
                 .orElse(null);
+    }
+
+    // ✅ Thêm user mới
+    public void addUser(User user) {
+        users.add(user);
+    }
+
+    // ✅ Tìm user theo mã memberId
+    public User findUser(String memberId) {
+        for (User user : users) {
+            if (user.getMemberId().equals(memberId)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    // ✅ Trả về danh sách người dùng
+    public List<User> getUsers() {
+        return users;
     }
 
     // Mượn tài liệu
