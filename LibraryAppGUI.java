@@ -172,15 +172,22 @@ public class LibraryAppGUI extends Application {
 
         displayUserButton.setOnAction(e -> {
             StringBuilder sb = new StringBuilder();
+
             if (userList.isEmpty()) {
                 sb.append("No users available.");
             } else {
                 for (User u : userList) {
-                    sb.append("Name: ").append(u.getName())
-                            .append(" | ID: ").append(u.getMemberId())
-                            .append(" | Borrowed: ").append(u.getBorrowedCount()).append("\n");
+                    // Tìm người dùng mới nhất từ danh sách trong thư viện
+                    User updatedUser = library.findUser(u.getMemberId());
+                    if (updatedUser != null) {
+                        sb.append("Name: ").append(updatedUser.getName())
+                                .append(" | ID: ").append(updatedUser.getMemberId())
+                                .append(" | Borrowed: ").append(updatedUser.getBorrowedCount())
+                                .append("\n");
+                    }
                 }
             }
+
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("User List");
             alert.setHeaderText("Registered Users:");
@@ -295,38 +302,91 @@ public class LibraryAppGUI extends Application {
         dialog.showAndWait().ifPresent(result -> {
             String title = result.getKey();
             String memberId = result.getValue();
+
             Document doc = library.findDocument(title);
 
             if (doc == null) {
                 showAlert(Alert.AlertType.WARNING, "Not Found", "Document not found.");
             } else if (!doc.isAvailable()) {
-                showAlert(Alert.AlertType.WARNING, "Unavailable", "Document is currently borrowed.");
+                showAlert(Alert.AlertType.WARNING, "Unavailable", "Document is currently not available.");
             } else {
+                // ✅ Cập nhật số lượng tài liệu
+                doc.setQuantity(doc.getQuantity() - 1);
+
+                // ✅ Gán người mượn
                 doc.setBorrowedBy(memberId);
+
+                // ✅ Tăng số lượng tài liệu mượn của người dùng
+                boolean userFound = false;
+                for (User u : userList) {
+                    if (u.getMemberId().equals(memberId)) {
+                        u.borrowDocument();
+                        userFound = true;
+                        break;
+                    }
+                }
+
+                if (!userFound) {
+                    showAlert(Alert.AlertType.WARNING, "User Not Found", "No user with ID: " + memberId);
+                    return;
+                }
+
+                // ✅ Cập nhật lại bảng tài liệu (TableView)
                 documentList.setAll(library.getDocuments());
+
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Document borrowed successfully!");
             }
         });
     }
 
     private void returnDocument() {
-        TextInputDialog dialog = new TextInputDialog();
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
         dialog.setTitle("Return Document");
-        dialog.setHeaderText("Enter Member ID:");
-        dialog.setContentText("Member ID:");
 
-        dialog.showAndWait().ifPresent(memberId -> {
-            Document doc = library.findDocument("Java Programming");
+        Label titleLabel = new Label("Document Title:");
+        TextField titleField = new TextField();
+        Label memberLabel = new Label("Member ID:");
+        TextField memberField = new TextField();
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(titleLabel, 0, 0);
+        grid.add(titleField, 1, 0);
+        grid.add(memberLabel, 0, 1);
+        grid.add(memberField, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(button -> {
+            if (button == ButtonType.OK) {
+                return new Pair<>(titleField.getText(), memberField.getText());
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(result -> {
+            String title = result.getKey();
+            String memberId = result.getValue();
+            Document doc = library.findDocument(title);
+
             if (doc != null && memberId.equals(doc.getBorrowedBy())) {
-                doc.setBorrowedBy(null);  // Reset borrowedBy when returning the document
+                doc.setBorrowedBy(null); // Đánh dấu là không ai mượn nữa
+                doc.setQuantity(doc.getQuantity() + 1); // Trả sách thì cộng lại
                 documentList.setAll(library.getDocuments());
-                System.out.println("Document returned by " + memberId);
+
+                // Giảm số tài liệu đang mượn của user
+                for (User u : userList) {
+                    if (u.getMemberId().equals(memberId)) {
+                        u.returnDocument();
+                        break;
+                    }
+                }
+
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Document returned successfully.");
             } else {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Invalid Return");
-                alert.setHeaderText("You cannot return this document.");
-                alert.setContentText("This document is not borrowed by you.");
-                alert.showAndWait();
+                showAlert(Alert.AlertType.WARNING, "Invalid Return", "Incorrect title or member ID.");
             }
         });
     }
