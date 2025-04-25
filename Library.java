@@ -1,45 +1,72 @@
 package org.example.giaodienthuvien;
 
-public class Document {
-    private String title;
-    private String author;
-    private int quantity;
-    private String borrowedBy; // Thêm trường lưu thông tin người mượn
+import java.util.ArrayList;
+import java.util.List;
 
-    public Document(String title, String author, int quantity) {
-        this.title = title;
-        this.author = author;
-        this.quantity = quantity;
-        this.borrowedBy = null; // Khi tài liệu chưa được mượn, borrowedBy sẽ là null
+public class Library {
+    private List<Document> documents = new ArrayList<>();
+    private List<User> users = new ArrayList<>(); // ✅ Thêm danh sách người dùng
+
+    // Thêm tài liệu
+    public void addDocument(Document doc) {
+        documents.add(doc);
     }
 
-    public String getTitle() {
-        return title;
+    // Xóa tài liệu theo tên
+    public void removeDocument(String title) {
+        documents.removeIf(doc -> doc.getTitle().equals(title));
     }
 
-    public String getAuthor() {
-        return author;
+    // Tìm tài liệu theo tên
+    public Document findDocument(String title) {
+        return documents.stream()
+                .filter(doc -> doc.getTitle().equals(title))
+                .findFirst()
+                .orElse(null);
     }
 
-    public int getQuantity() {
-        return quantity;
+    // ✅ Thêm user mới
+    public void addUser(User user) {
+        users.add(user);
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    // ✅ Tìm user theo mã memberId
+    public User findUser(String memberId) {
+        for (User user : users) {
+            if (user.getMemberId().equals(memberId)) {
+                return user;
+            }
+        }
+        return null;
     }
 
-    // Getter và setter cho borrowedBy
-    public String getBorrowedBy() {
-        return borrowedBy;
+    // ✅ Trả về danh sách người dùng
+    public List<User> getUsers() {
+        return users;
     }
 
-    public void setBorrowedBy(String borrowedBy) {
-        this.borrowedBy = borrowedBy;
+    // Mượn tài liệu
+    public void borrowDocument(String title, String userId) {
+        Document doc = findDocument(title);
+        if (doc != null && doc.getQuantity() > 0) {
+            doc.setQuantity(doc.getQuantity() - 1);
+            System.out.println("Document borrowed by user: " + userId);
+        } else {
+            System.out.println("Document is not available or not found.");
+        }
     }
 
-    // Kiểm tra xem tài liệu có sẵn để mượn không
-    public boolean isAvailable() {
-        return borrowedBy == null; // Tài liệu có sẵn nếu không có người mượn
+    // Trả tài liệu
+    public void returnDocument(String title, String userId) {
+        Document doc = findDocument(title);
+        if (doc != null) {
+            doc.setQuantity(doc.getQuantity() + 1);
+            System.out.println("Document returned by user: " + userId);
+        }
+    }
+
+    // Phương thức trả về danh sách tài liệu
+    public List<Document> getDocuments() {
+        return documents;
     }
 }
