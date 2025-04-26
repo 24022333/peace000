@@ -1,16 +1,25 @@
-package org.example.giaodienthuvien;
+package com.example.giaodien;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Document {
     private String title;
     private String author;
     private int quantity;
-    private String borrowedBy; // Thêm trường lưu thông tin người mượn
+    private List<String> borrowedBy;
 
     public Document(String title, String author, int quantity) {
+        if (title == null || title.trim().isEmpty() || author == null || author.trim().isEmpty()) {
+            throw new IllegalArgumentException("Title and author cannot be empty");
+        }
+        if (quantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
         this.title = title;
         this.author = author;
         this.quantity = quantity;
-        this.borrowedBy = null; // Khi tài liệu chưa được mượn, borrowedBy sẽ là null
+        this.borrowedBy = new ArrayList<>();
     }
 
     public String getTitle() {
@@ -26,20 +35,30 @@ public class Document {
     }
 
     public void setQuantity(int quantity) {
+        if (quantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
         this.quantity = quantity;
     }
 
-    // Getter và setter cho borrowedBy
-    public String getBorrowedBy() {
+    public List<String> getBorrowedBy() {
         return borrowedBy;
     }
 
-    public void setBorrowedBy(String borrowedBy) {
-        this.borrowedBy = borrowedBy;
+    public void addBorrower(String memberId) {
+        borrowedBy.add(memberId);
     }
 
-    // Kiểm tra xem tài liệu có sẵn để mượn không
+    public void removeBorrower(String memberId) {
+        borrowedBy.remove(memberId);
+    }
+
     public boolean isAvailable() {
-        return borrowedBy == null; // Tài liệu có sẵn nếu không có người mượn
+        return quantity > borrowedBy.size();
+    }
+
+    // Thêm phương thức tính số lượng khả dụng
+    public int getAvailableQuantity() {
+        return quantity - borrowedBy.size();
     }
 }
