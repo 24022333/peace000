@@ -1,72 +1,89 @@
-package org.example.giaodienthuvien;
+package com.example.giaodien;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Library {
     private List<Document> documents = new ArrayList<>();
-    private List<User> users = new ArrayList<>(); // ✅ Thêm danh sách người dùng
+    private List<User> users = new ArrayList<>();
 
-    // Thêm tài liệu
     public void addDocument(Document doc) {
+        if (findDocument(doc.getTitle()) != null) {
+            throw new IllegalArgumentException("Document with title '" + doc.getTitle() + "' already exists");
+        }
         documents.add(doc);
     }
 
-    // Xóa tài liệu theo tên
     public void removeDocument(String title) {
-        documents.removeIf(doc -> doc.getTitle().equals(title));
+        Document doc = findDocument(title);
+        if (doc == null) {
+            throw new IllegalArgumentException("Document not found");
+        }
+        if (!doc.getBorrowedBy().isEmpty()) {
+            throw new IllegalStateException("Cannot remove document while it is borrowed");
+        }
+        documents.remove(doc);
     }
 
-    // Tìm tài liệu theo tên
     public Document findDocument(String title) {
         return documents.stream()
-                .filter(doc -> doc.getTitle().equals(title))
+                .filter(doc -> doc.getTitle().equalsIgnoreCase(title))
                 .findFirst()
                 .orElse(null);
     }
 
-    // ✅ Thêm user mới
     public void addUser(User user) {
+        if (findUser(user.getMemberId()) != null) {
+            throw new IllegalArgumentException("User with ID '" + user.getMemberId() + "' already exists");
+        }
         users.add(user);
     }
 
-    // ✅ Tìm user theo mã memberId
     public User findUser(String memberId) {
-        for (User user : users) {
-            if (user.getMemberId().equals(memberId)) {
-                return user;
-            }
-        }
-        return null;
+        return users.stream()
+                .filter(user -> user.getMemberId().equals(memberId))
+                .findFirst()
+                .orElse(null);
     }
 
-    // ✅ Trả về danh sách người dùng
-    public List<User> getUsers() {
-        return users;
-    }
-
-    // Mượn tài liệu
-    public void borrowDocument(String title, String userId) {
+    public void borrowDocument(String title, String memberId) {
         Document doc = findDocument(title);
-        if (doc != null && doc.getQuantity() > 0) {
-            doc.setQuantity(doc.getQuantity() - 1);
-            System.out.println("Document borrowed by user: " + userId);
-        } else {
-            System.out.println("Document is not available or not found.");
+        User user = findUser(memberId);
+        if (doc == null) {
+            throw new IllegalArgumentException("Document not found");
         }
+        if (user == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+        if (!doc.isAvailable()) {
+            throw new IllegalStateException("Document is not available");
+        }
+        doc.addBorrower(memberId);
+        user.borrowDocument();
     }
 
-    // Trả tài liệu
-    public void returnDocument(String title, String userId) {
+    public void returnDocument(String title, String memberId) {
         Document doc = findDocument(title);
-        if (doc != null) {
-            doc.setQuantity(doc.getQuantity() + 1);
-            System.out.println("Document returned by user: " + userId);
+        User user = findUser(memberId);
+        if (doc == null) {
+            throw new IllegalArgumentException("Document not found");
         }
+        if (user == null) {
+            throw new IllegalArgumentException("User not found");
+        }
+        if (!doc.getBorrowedBy().contains(memberId)) {
+            throw new IllegalStateException("Document was not borrowed by this user");
+        }
+        doc.removeBorrower(memberId);
+        user.returnDocument();
     }
 
-    // Phương thức trả về danh sách tài liệu
     public List<Document> getDocuments() {
-        return documents;
+        return new ArrayList<>(documents);
+    }
+
+    public List<User> getUsers() {
+        return new ArrayList<>(users);
     }
 }
