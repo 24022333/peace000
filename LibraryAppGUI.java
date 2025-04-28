@@ -9,7 +9,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
@@ -17,7 +16,10 @@ import javafx.util.Pair;
 import javafx.animation.ScaleTransition;
 import javafx.util.Duration;
 import javafx.scene.control.Button;
-
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import java.io.InputStream;
 
 public class LibraryAppGUI extends Application {
@@ -26,6 +28,7 @@ public class LibraryAppGUI extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
         // Khởi tạo dữ liệu (không có dữ liệu mẫu)
         initializeSampleData();
 
@@ -41,6 +44,7 @@ public class LibraryAppGUI extends Application {
         titleBox.setPadding(new Insets(10));
         titleBox.setStyle("-fx-background-color: #1C1C1C");
         root.setTop(titleBox);
+
 
         // Bảng tài liệu
         TableView<Document> documentTable = new TableView<>();
@@ -75,13 +79,13 @@ public class LibraryAppGUI extends Application {
         Button findDocumentButton = createStyledButton("Tìm Tài Liệu");
         Button displayDocumentButton = createStyledButton("Hiển Thị Tài Liệu");
         Button addUserButton = createStyledButton("Thêm Người Dùng");
-        Button displayUserButton = createStyledButton("Hiển Thị Người Dùng");
+        Button displayUserButton = createStyledButton("Hiện Người Dùng");
         Button exitButton = createStyledButton("Thoát");
 
 
         GridPane buttonGrid = new GridPane();
-        buttonGrid.setHgap(20);
-        buttonGrid.setVgap(20);
+        buttonGrid.setHgap(30);
+        buttonGrid.setVgap(30);
         buttonGrid.setAlignment(Pos.CENTER);
         buttonGrid.add(addDocumentButton, 0, 0);
         buttonGrid.add(removeDocumentButton, 1, 0);
@@ -95,20 +99,9 @@ public class LibraryAppGUI extends Application {
         buttonGrid.add(displayUserButton, 3, 1);
         buttonGrid.add(exitButton, 4, 1);
 
-        VBox centerLayout = new VBox(10, documentTable, buttonGrid);
-        centerLayout.setPadding(new Insets(10));
+        VBox centerLayout = new VBox(30, documentTable, buttonGrid);
+        centerLayout.setPadding(new Insets(30));
         root.setCenter(centerLayout);
-
-        // Ảnh nền
-        InputStream bgStream = getClass().getResourceAsStream("/images/background.jpg");
-        if (bgStream != null) {
-            Image bgImage = new Image(bgStream);
-            BackgroundImage backgroundImage = new BackgroundImage(bgImage, BackgroundRepeat.NO_REPEAT,
-                    BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
-            root.setBackground(new Background(backgroundImage));
-        } else {
-            root.setStyle("-fx-background-color: #34495e;");
-        }
 
         // Tạo Scene
         Scene scene = new Scene(root, 1000, 700);
@@ -141,14 +134,13 @@ public class LibraryAppGUI extends Application {
                 + "-fx-border-color: #1F9C99; "
                 + "-fx-border-width: 2px; "
                 + "-fx-border-radius: 12px; "
-                + "-fx-background-radius: 12px; "
-                + "-fx-effect: dropshadow(gaussian, #1F9C99, 10, 0, 0, 5);"); // Chỉ dùng dropshadow, bỏ glow
+                + "-fx-background-radius: 12px; "); // Chỉ dùng dropshadow, bỏ glow
 
         // Thêm hiệu ứng phóng to khi nhấn nút
         button.setOnMousePressed(e -> {
             ScaleTransition scale = new ScaleTransition(Duration.millis(100), button);
-            scale.setToX(1.2);  // Phóng to theo trục X
-            scale.setToY(1.2);  // Phóng to theo trục Y
+            scale.setToX(1.3);  // Phóng to theo trục X
+            scale.setToY(1.3);  // Phóng to theo trục Y
             scale.play();
         });
 
@@ -159,6 +151,32 @@ public class LibraryAppGUI extends Application {
             scale.setToY(1);  // Trở lại kích thước bình thường
             scale.play();
         });
+
+        // Thêm hiệu ứng hover
+        button.setOnMouseEntered(e -> {
+            button.setStyle("-fx-background-color: #2980b9; "
+                    + "-fx-text-fill: white; "
+                    + "-fx-font-size: 14px; "
+                    + "-fx-padding: 10px; "
+                    + "-fx-pref-width: 150px; "
+                    + "-fx-border-color: #1F9C99; "
+                    + "-fx-border-width: 2px; "
+                    + "-fx-border-radius: 12px; "
+                    + "-fx-background-radius: 12px;");
+        });
+
+        button.setOnMouseExited(e -> {
+            button.setStyle("-fx-background-color: #3498db; "
+                    + "-fx-text-fill: white; "
+                    + "-fx-font-size: 14px; "
+                    + "-fx-padding: 10px; "
+                    + "-fx-pref-width: 150px; "
+                    + "-fx-border-color: #1F9C99; "
+                    + "-fx-border-width: 2px; "
+                    + "-fx-border-radius: 12px; "
+                    + "-fx-background-radius: 12px;");
+        });
+
 
         return button;
     }
