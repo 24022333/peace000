@@ -1,4 +1,4 @@
-package org.example.giaodienthuvien;
+package org.example.thuvien;
 
 public class User {
     private String name;
@@ -6,6 +6,12 @@ public class User {
     private int borrowedCount;
 
     public User(String name, String memberId) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be empty");
+        }
+        if (memberId == null || memberId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Member ID cannot be empty");
+        }
         this.name = name;
         this.memberId = memberId;
         this.borrowedCount = 0;
@@ -28,6 +34,10 @@ public class User {
     }
 
     public void returnDocument() {
-        borrowedCount--;
+        if (borrowedCount > 0) {
+            borrowedCount--;
+        } else {
+            throw new IllegalStateException("No documents borrowed by this user");
+        }
     }
 }
