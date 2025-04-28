@@ -1,219 +1,194 @@
-package org.example.giaodienthuvien;
+package org.example.thuvien;
 
 import javafx.application.Application;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.geometry.Pos;
 import javafx.util.Pair;
+import javafx.animation.ScaleTransition;
+import javafx.util.Duration;
+import javafx.scene.control.Button;
 
-import java.net.URL;
+import java.io.InputStream;
 
 public class LibraryAppGUI extends Application {
     private Library library = new Library();
-    private ObservableList<Document> documentList = FXCollections.observableArrayList(library.getDocuments());
-    private ObservableList<User> userList = FXCollections.observableArrayList();
+    private ObservableList<Document> documentList = FXCollections.observableArrayList();
 
     @Override
     public void start(Stage primaryStage) {
-        // Tạo các nút chức năng
-        Button addDocumentButton = new Button("Add Document");
-        Button removeDocumentButton = new Button("Remove Document");
-        Button updateDocumentButton = new Button("Update Document");
-        Button borrowDocumentButton = new Button("Borrow Document");
-        Button returnDocumentButton = new Button("Return Document");
+        // Khởi tạo dữ liệu (không có dữ liệu mẫu)
+        initializeSampleData();
 
-        Button findDocumentButton = new Button("Find Document");
-        Button displayDocumentButton = new Button("Display Document");
-        Button addUserButton = new Button("Add User");
-        Button displayUserButton = new Button("Display User Info");
-        Button exitButton = new Button("Exit");
+        // Tạo bố cục chính
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(10));
 
-        // Tạo bảng hiển thị tài liệu
-        TableView<Document> documentTable = new TableView<>(documentList);
+        // Tiêu đề
+        Label titleLabel = new Label("Hệ Thống Quản Lý Thư Viện");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
+        HBox titleBox = new HBox(titleLabel);
+        titleBox.setAlignment(Pos.CENTER);
+        titleBox.setPadding(new Insets(10));
+        titleBox.setStyle("-fx-background-color: #1C1C1C");
+        root.setTop(titleBox);
+
+        // Bảng tài liệu
+        TableView<Document> documentTable = new TableView<>();
+        documentTable.setItems(documentList);
         documentTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        documentTable.setPlaceholder(new Label("Chưa có tài liệu nào. Nhấn 'Thêm Tài Liệu' để bắt đầu."));
 
-        TableColumn<Document, String> titleColumn = new TableColumn<>("Title");
-        TableColumn<Document, String> authorColumn = new TableColumn<>("Author");
-        TableColumn<Document, Integer> quantityColumn = new TableColumn<>("Quantity");
+        TableColumn<Document, String> titleColumn = new TableColumn<>("Tiêu đề");
+        TableColumn<Document, String> authorColumn = new TableColumn<>("Tác giả");
+        TableColumn<Document, Integer> availableQuantityColumn = new TableColumn<>("Số lượng khả dụng");
 
-        titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-        authorColumn.setCellValueFactory(new PropertyValueFactory<>("author"));
-        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        titleColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
+        authorColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getAuthor()));
+        availableQuantityColumn.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getAvailableQuantity()).asObject());
 
-        titleColumn.setStyle("-fx-alignment: CENTER;");
-        authorColumn.setStyle("-fx-alignment: CENTER;");
-        quantityColumn.setStyle("-fx-alignment: CENTER;");
+        documentTable.getColumns().addAll(titleColumn, authorColumn, availableQuantityColumn);
+        documentTable.setStyle("-fx-background-color: #2F2F2F;");
 
-        documentTable.getColumns().addAll(titleColumn, authorColumn, quantityColumn);
+        // Hiển thị thông tin chi tiết khi chọn tài liệu
+        documentTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                showDocumentDetails(newSelection);
+            }
+        });
 
-        // Style cho các nút
-        for (Button btn : new Button[] {
-                addDocumentButton, removeDocumentButton, updateDocumentButton,
-                borrowDocumentButton, returnDocumentButton, findDocumentButton,
-                displayDocumentButton, addUserButton, displayUserButton, exitButton}) {
-            btn.setPrefWidth(140);
-        }
+        // Các nút chức năng
+        Button addDocumentButton = createStyledButton("Thêm Tài Liệu");
+        Button removeDocumentButton = createStyledButton("Xóa Tài Liệu");
+        Button updateDocumentButton = createStyledButton("Cập Nhật Tài Liệu");
+        Button borrowDocumentButton = createStyledButton("Mượn Tài Liệu");
+        Button returnDocumentButton = createStyledButton("Trả Tài Liệu");
+        Button findDocumentButton = createStyledButton("Tìm Tài Liệu");
+        Button displayDocumentButton = createStyledButton("Hiển Thị Tài Liệu");
+        Button addUserButton = createStyledButton("Thêm Người Dùng");
+        Button displayUserButton = createStyledButton("Hiển Thị Người Dùng");
+        Button exitButton = createStyledButton("Thoát");
 
-        // Bố cục các nút
-        HBox buttonLayout = new HBox(10, addDocumentButton, removeDocumentButton, updateDocumentButton, borrowDocumentButton, returnDocumentButton);
-        buttonLayout.setAlignment(Pos.CENTER);
-        buttonLayout.setStyle("-fx-padding: 10;");
 
-        HBox extraButtons = new HBox(10, findDocumentButton, displayDocumentButton, addUserButton, displayUserButton, exitButton);
-        extraButtons.setAlignment(Pos.CENTER);
-        extraButtons.setStyle("-fx-padding: 10;");
+        GridPane buttonGrid = new GridPane();
+        buttonGrid.setHgap(20);
+        buttonGrid.setVgap(20);
+        buttonGrid.setAlignment(Pos.CENTER);
+        buttonGrid.add(addDocumentButton, 0, 0);
+        buttonGrid.add(removeDocumentButton, 1, 0);
+        buttonGrid.add(updateDocumentButton, 2, 0);
+        buttonGrid.add(borrowDocumentButton, 3, 0);
+        buttonGrid.add(returnDocumentButton, 4, 0);
 
-        // Bố cục chính
-        VBox contentLayout = new VBox(20, buttonLayout, extraButtons, documentTable);
-        contentLayout.setStyle("-fx-padding: 20px;");
+        buttonGrid.add(findDocumentButton, 0, 1);
+        buttonGrid.add(displayDocumentButton, 1, 1);
+        buttonGrid.add(addUserButton, 2, 1);
+        buttonGrid.add(displayUserButton, 3, 1);
+        buttonGrid.add(exitButton, 4, 1);
+
+        VBox centerLayout = new VBox(10, documentTable, buttonGrid);
+        centerLayout.setPadding(new Insets(10));
+        root.setCenter(centerLayout);
 
         // Ảnh nền
-        StackPane root = new StackPane();
-        ImageView bgView = null;
-        URL imageUrl = getClass().getResource("/images/background.jpg");
-        if (imageUrl == null) {
-            System.out.println("Ảnh nền không tìm thấy!");
+        InputStream bgStream = getClass().getResourceAsStream("/images/background.jpg");
+        if (bgStream != null) {
+            Image bgImage = new Image(bgStream);
+            BackgroundImage backgroundImage = new BackgroundImage(bgImage, BackgroundRepeat.NO_REPEAT,
+                    BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
+            root.setBackground(new Background(backgroundImage));
         } else {
-            Image bgImage = new Image(imageUrl.toExternalForm());
-            bgView = new ImageView(bgImage);
-            bgView.fitWidthProperty().bind(root.widthProperty());
-            bgView.fitHeightProperty().bind(root.heightProperty());
+            root.setStyle("-fx-background-color: #34495e;");
         }
 
-        // StackPane để chồng nền và nội dung
-        if (bgView != null) {
-            root.getChildren().addAll(bgView, contentLayout);
-        } else {
-            root.getChildren().add(contentLayout);
-        }
-
-        // Tạo scene
-        Scene scene = new Scene(root, 800, 600);
-        scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-
+        // Tạo Scene
+        Scene scene = new Scene(root, 1000, 700);
+        scene.getStylesheets().add(getClass().getResource("/style.css") != null ?
+                getClass().getResource("/style.css").toExternalForm() : "");
         primaryStage.setScene(scene);
-        primaryStage.setTitle("Library Management System - Dark Mode");
+        primaryStage.setTitle("Hệ Thống Quản Lý Thư Viện");
         primaryStage.show();
 
-        // Hành động các nút
+        // Xử lý sự kiện nút
         addDocumentButton.setOnAction(e -> addDocument());
         removeDocumentButton.setOnAction(e -> removeDocument());
         updateDocumentButton.setOnAction(e -> updateDocument());
         borrowDocumentButton.setOnAction(e -> borrowDocument());
         returnDocumentButton.setOnAction(e -> returnDocument());
-
-        findDocumentButton.setOnAction(e -> {
-            TextInputDialog dialog = new TextInputDialog();
-            dialog.setTitle("Find Document");
-            dialog.setHeaderText("Enter document title:");
-            dialog.setContentText("Title:");
-            dialog.showAndWait().ifPresent(title -> {
-                Document doc = library.findDocument(title);
-                if (doc != null) {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Document Found");
-                    alert.setHeaderText("Document Info:");
-                    alert.setContentText("Title: " + doc.getTitle() + "\nAuthor: " + doc.getAuthor() + "\nQuantity: " + doc.getQuantity());
-                    alert.showAndWait();
-                } else {
-                    Alert alert = new Alert(Alert.AlertType.WARNING);
-                    alert.setTitle("Not Found");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Document not found.");
-                    alert.showAndWait();
-                }
-            });
-        });
-
-        // Đã sửa phần này
-        displayDocumentButton.setOnAction(e -> {
-            documentList.setAll(library.getDocuments());
-        });
-
-        addUserButton.setOnAction(e -> {
-            Dialog<User> dialog = new Dialog<>();
-            dialog.setTitle("Add User");
-
-            Label nameLabel = new Label("Name:");
-            TextField nameField = new TextField();
-            Label idLabel = new Label("Member ID:");
-            TextField idField = new TextField();
-
-            GridPane grid = new GridPane();
-            grid.setHgap(10); grid.setVgap(10);
-            grid.add(nameLabel, 0, 0); grid.add(nameField, 1, 0);
-            grid.add(idLabel, 0, 1); grid.add(idField, 1, 1);
-
-            dialog.getDialogPane().setContent(grid);
-            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-            dialog.setResultConverter(button -> {
-                if (button == ButtonType.OK) {
-                    return new User(nameField.getText(), idField.getText());
-                }
-                return null;
-            });
-
-            dialog.showAndWait().ifPresent(user -> {
-                userList.add(user);
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("User Added");
-                alert.setContentText("User " + user.getName() + " added!");
-                alert.showAndWait();
-            });
-        });
-
-        displayUserButton.setOnAction(e -> {
-            StringBuilder sb = new StringBuilder();
-
-            if (userList.isEmpty()) {
-                sb.append("No users available.");
-            } else {
-                for (User u : userList) {
-                    // Tìm người dùng mới nhất từ danh sách trong thư viện
-                    User updatedUser = library.findUser(u.getMemberId());
-                    if (updatedUser != null) {
-                        sb.append("Name: ").append(updatedUser.getName())
-                                .append(" | ID: ").append(updatedUser.getMemberId())
-                                .append(" | Borrowed: ").append(updatedUser.getBorrowedCount())
-                                .append("\n");
-                    }
-                }
-            }
-
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("User List");
-            alert.setHeaderText("Registered Users:");
-            alert.setContentText(sb.toString());
-            alert.showAndWait();
-        });
-
+        findDocumentButton.setOnAction(e -> findDocument());
+        displayDocumentButton.setOnAction(e -> displayDocuments());
+        addUserButton.setOnAction(e -> addUser());
+        displayUserButton.setOnAction(e -> displayUsers());
         exitButton.setOnAction(e -> primaryStage.close());
+    }
+
+    private Button createStyledButton(String text) {
+        Button button = new Button(text);
+        button.setStyle("-fx-background-color: #3498db; "
+                + "-fx-text-fill: white; "
+                + "-fx-font-size: 14px; "
+                + "-fx-padding: 10px; "
+                + "-fx-pref-width: 150px; "
+                + "-fx-border-color: #1F9C99; "
+                + "-fx-border-width: 2px; "
+                + "-fx-border-radius: 12px; "
+                + "-fx-background-radius: 12px; "
+                + "-fx-effect: dropshadow(gaussian, #1F9C99, 10, 0, 0, 5);"); // Chỉ dùng dropshadow, bỏ glow
+
+        // Thêm hiệu ứng phóng to khi nhấn nút
+        button.setOnMousePressed(e -> {
+            ScaleTransition scale = new ScaleTransition(Duration.millis(100), button);
+            scale.setToX(1.2);  // Phóng to theo trục X
+            scale.setToY(1.2);  // Phóng to theo trục Y
+            scale.play();
+        });
+
+        // Thêm hiệu ứng trở lại kích thước bình thường khi thả nút
+        button.setOnMouseReleased(e -> {
+            ScaleTransition scale = new ScaleTransition(Duration.millis(100), button);
+            scale.setToX(1);  // Trở lại kích thước bình thường
+            scale.setToY(1);  // Trở lại kích thước bình thường
+            scale.play();
+        });
+
+        return button;
+    }
+
+    private void initializeSampleData() {
+        try {
+            // Không khởi tạo dữ liệu mẫu (bỏ cả tài liệu và người dùng)
+            documentList.setAll(library.getDocuments());
+        } catch (IllegalArgumentException e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi khởi tạo", e.getMessage());
+        }
     }
 
     private void addDocument() {
         Dialog<Document> dialog = new Dialog<>();
-        dialog.setTitle("Add Document");
+        dialog.setTitle("Thêm Tài Liệu");
 
-        Label titleLabel = new Label("Title:");
         TextField titleField = new TextField();
-        Label authorLabel = new Label("Author:");
         TextField authorField = new TextField();
-        Label quantityLabel = new Label("Quantity:");
         TextField quantityField = new TextField();
 
         GridPane grid = new GridPane();
-        grid.setHgap(10); grid.setVgap(10);
-        grid.add(titleLabel, 0, 0); grid.add(titleField, 1, 0);
-        grid.add(authorLabel, 0, 1); grid.add(authorField, 1, 1);
-        grid.add(quantityLabel, 0, 2); grid.add(quantityField, 1, 2);
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(new Label("Tiêu đề:"), 0, 0);
+        grid.add(titleField, 1, 0);
+        grid.add(new Label("Tác giả:"), 0, 1);
+        grid.add(authorField, 1, 1);
+        grid.add(new Label("Số lượng:"), 0, 2);
+        grid.add(quantityField, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -223,176 +198,271 @@ public class LibraryAppGUI extends Application {
                 try {
                     int quantity = Integer.parseInt(quantityField.getText());
                     return new Document(titleField.getText(), authorField.getText(), quantity);
-                } catch (NumberFormatException e) {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Invalid Input");
-                    alert.setContentText("Quantity must be a number.");
-                    alert.showAndWait();
+                } catch (IllegalArgumentException e) {
+                    showAlert(Alert.AlertType.ERROR, "Lỗi đầu vào", "Vui lòng nhập số lượng hợp lệ và điền đầy đủ thông tin.");
+                    return null;
                 }
             }
             return null;
         });
 
         dialog.showAndWait().ifPresent(doc -> {
-            library.addDocument(doc);
-            documentList.setAll(library.getDocuments());
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Document Added");
-            alert.setContentText("Document \"" + doc.getTitle() + "\" added successfully!");
-            alert.showAndWait();
+            try {
+                library.addDocument(doc);
+                documentList.setAll(library.getDocuments());
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã thêm tài liệu: " + doc.getTitle());
+            } catch (IllegalArgumentException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", e.getMessage());
+            }
         });
     }
 
     private void removeDocument() {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Remove Document");
-        dialog.setHeaderText("Enter document title to remove:");
-        dialog.setContentText("Title:");
+        dialog.setTitle("Xóa Tài Liệu");
+        dialog.setHeaderText("Nhập tiêu đề tài liệu cần xóa:");
+        dialog.setContentText("Tiêu đề:");
 
         dialog.showAndWait().ifPresent(title -> {
-            Document doc = library.findDocument(title);
-            if (doc != null) {
-                library.removeDocument(doc.getTitle());
+            try {
+                library.removeDocument(title);
                 documentList.setAll(library.getDocuments());
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Document removed successfully.");
-            } else {
-                showAlert(Alert.AlertType.WARNING, "Not Found", "Document with the title \"" + title + "\" not found.");
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã xóa tài liệu.");
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", e.getMessage());
             }
         });
     }
 
     private void updateDocument() {
-        Document doc = library.findDocument("Java Programming");
-        if (doc != null) {
-            doc.setQuantity(10);
-            documentList.setAll(library.getDocuments());
-            System.out.println("Document updated.");
-        } else {
-            System.out.println("Document not found.");
-        }
-    }
+        Dialog<Document> dialog = new Dialog<>();
+        dialog.setTitle("Cập Nhật Tài Liệu");
 
-    private void borrowDocument() {
-        Dialog<Pair<String, String>> dialog = new Dialog<>();
-        dialog.setTitle("Borrow Document");
-
-        Label titleLabel = new Label("Document Title:");
         TextField titleField = new TextField();
-        Label memberLabel = new Label("Member ID:");
-        TextField memberField = new TextField();
+        TextField authorField = new TextField();
+        TextField quantityField = new TextField();
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
-        grid.add(titleLabel, 0, 0);
+        grid.add(new Label("Tiêu đề:"), 0, 0);
         grid.add(titleField, 1, 0);
-        grid.add(memberLabel, 0, 1);
-        grid.add(memberField, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == ButtonType.OK) {
-                return new Pair<>(titleField.getText(), memberField.getText());
-            }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(result -> {
-            String title = result.getKey();
-            String memberId = result.getValue();
-
-            Document doc = library.findDocument(title);
-
-            if (doc == null) {
-                showAlert(Alert.AlertType.WARNING, "Not Found", "Document not found.");
-            } else if (!doc.isAvailable()) {
-                showAlert(Alert.AlertType.WARNING, "Unavailable", "Document is currently not available.");
-            } else {
-                // ✅ Cập nhật số lượng tài liệu
-                doc.setQuantity(doc.getQuantity() - 1);
-
-                // ✅ Gán người mượn
-                doc.setBorrowedBy(memberId);
-
-                // ✅ Tăng số lượng tài liệu mượn của người dùng
-                boolean userFound = false;
-                for (User u : userList) {
-                    if (u.getMemberId().equals(memberId)) {
-                        u.borrowDocument();
-                        userFound = true;
-                        break;
-                    }
-                }
-
-                if (!userFound) {
-                    showAlert(Alert.AlertType.WARNING, "User Not Found", "No user with ID: " + memberId);
-                    return;
-                }
-
-                // ✅ Cập nhật lại bảng tài liệu (TableView)
-                documentList.setAll(library.getDocuments());
-
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Document borrowed successfully!");
-            }
-        });
-    }
-
-    private void returnDocument() {
-        Dialog<Pair<String, String>> dialog = new Dialog<>();
-        dialog.setTitle("Return Document");
-
-        Label titleLabel = new Label("Document Title:");
-        TextField titleField = new TextField();
-        Label memberLabel = new Label("Member ID:");
-        TextField memberField = new TextField();
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.add(titleLabel, 0, 0);
-        grid.add(titleField, 1, 0);
-        grid.add(memberLabel, 0, 1);
-        grid.add(memberField, 1, 1);
+        grid.add(new Label("Tác giả:"), 0, 1);
+        grid.add(authorField, 1, 1);
+        grid.add(new Label("Số lượng:"), 0, 2);
+        grid.add(quantityField, 1, 2);
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
-                return new Pair<>(titleField.getText(), memberField.getText());
+                try {
+                    int quantity = Integer.parseInt(quantityField.getText());
+                    return new Document(titleField.getText(), authorField.getText(), quantity);
+                } catch (IllegalArgumentException e) {
+                    showAlert(Alert.AlertType.ERROR, "Lỗi đầu vào", "Vui lòng nhập số lượng hợp lệ và điền đầy đủ thông tin.");
+                    return null;
+                }
             }
             return null;
         });
 
-        dialog.showAndWait().ifPresent(result -> {
-            String title = result.getKey();
-            String memberId = result.getValue();
-            Document doc = library.findDocument(title);
-
-            if (doc != null && memberId.equals(doc.getBorrowedBy())) {
-                doc.setBorrowedBy(null); // Đánh dấu là không ai mượn nữa
-                doc.setQuantity(doc.getQuantity() + 1); // Trả sách thì cộng lại
-                documentList.setAll(library.getDocuments());
-
-                // Giảm số tài liệu đang mượn của user
-                for (User u : userList) {
-                    if (u.getMemberId().equals(memberId)) {
-                        u.returnDocument();
-                        break;
-                    }
+        dialog.showAndWait().ifPresent(doc -> {
+            try {
+                Document existingDoc = library.findDocument(doc.getTitle());
+                if (existingDoc != null) {
+                    library.removeDocument(doc.getTitle());
+                    library.addDocument(doc);
+                    documentList.setAll(library.getDocuments());
+                    showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã cập nhật tài liệu: " + doc.getTitle());
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Lỗi", "Tài liệu không tồn tại.");
                 }
-
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Document returned successfully.");
-            } else {
-                showAlert(Alert.AlertType.WARNING, "Invalid Return", "Incorrect title or member ID.");
+            } catch (IllegalArgumentException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", e.getMessage());
             }
         });
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    private void borrowDocument() {
+        // Kiểm tra xem có người dùng nào không trước khi cho mượn
+        if (library.getUsers().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Không có người dùng", "Vui lòng thêm người dùng trước khi mượn tài liệu.");
+            return;
+        }
+
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.setTitle("Mượn Tài Liệu");
+
+        TextField titleField = new TextField();
+        TextField memberIdField = new TextField();
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(new Label("Tiêu đề tài liệu:"), 0, 0);
+        grid.add(titleField, 1, 0);
+        grid.add(new Label("Mã thành viên:"), 0, 1);
+        grid.add(memberIdField, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(button -> {
+            if (button == ButtonType.OK) {
+                return new Pair<>(titleField.getText(), memberIdField.getText());
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(pair -> {
+            try {
+                library.borrowDocument(pair.getKey(), pair.getValue());
+                documentList.setAll(library.getDocuments());
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã mượn tài liệu.");
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", e.getMessage());
+            }
+        });
+    }
+
+    private void returnDocument() {
+        // Kiểm tra xem có người dùng nào không trước khi trả
+        if (library.getUsers().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Không có người dùng", "Vui lòng thêm người dùng trước khi trả tài liệu.");
+            return;
+        }
+
+        Dialog<Pair<String, String>> dialog = new Dialog<>();
+        dialog.setTitle("Trả Tài Liệu");
+
+        TextField titleField = new TextField();
+        TextField memberIdField = new TextField();
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(new Label("Tiêu đề tài liệu:"), 0, 0);
+        grid.add(titleField, 1, 0);
+        grid.add(new Label("Mã thành viên:"), 0, 1);
+        grid.add(memberIdField, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(button -> {
+            if (button == ButtonType.OK) {
+                return new Pair<>(titleField.getText(), memberIdField.getText());
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(pair -> {
+            try {
+                library.returnDocument(pair.getKey(), pair.getValue());
+                documentList.setAll(library.getDocuments());
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã trả tài liệu.");
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", e.getMessage());
+            }
+        });
+    }
+
+    private void findDocument() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Tìm Tài Liệu");
+        dialog.setHeaderText("Nhập tiêu đề tài liệu:");
+        dialog.setContentText("Tiêu đề:");
+
+        dialog.showAndWait().ifPresent(title -> {
+            Document doc = library.findDocument(title);
+            if (doc != null) {
+                showAlert(Alert.AlertType.INFORMATION, "Tìm thấy tài liệu",
+                        "Tiêu đề: " + doc.getTitle() + "\nTác giả: " + doc.getAuthor() +
+                                "\nSố lượng khả dụng: " + doc.getAvailableQuantity());
+            } else {
+                showAlert(Alert.AlertType.WARNING, "Không tìm thấy", "Tài liệu không tồn tại.");
+            }
+        });
+    }
+
+    private void displayDocuments() {
+        StringBuilder sb = new StringBuilder();
+        if (library.getDocuments().isEmpty()) {
+            sb.append("Chưa có tài liệu nào. Nhấn 'Thêm Tài Liệu' để bắt đầu.");
+        } else {
+            for (Document doc : library.getDocuments()) {
+                sb.append("Tiêu đề: ").append(doc.getTitle())
+                        .append(" | Tác giả: ").append(doc.getAuthor())
+                        .append(" | Số lượng khả dụng: ").append(doc.getAvailableQuantity())
+                        .append("\n");
+            }
+        }
+        showAlert(Alert.AlertType.INFORMATION, "Danh sách tài liệu", sb.toString());
+    }
+
+    private void addUser() {
+        Dialog<User> dialog = new Dialog<>();
+        dialog.setTitle("Thêm Người Dùng");
+
+        TextField nameField = new TextField();
+        TextField idField = new TextField();
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.add(new Label("Tên:"), 0, 0);
+        grid.add(nameField, 1, 0);
+        grid.add(new Label("Mã thành viên:"), 0, 1);
+        grid.add(idField, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        dialog.setResultConverter(button -> {
+            if (button == ButtonType.OK) {
+                try {
+                    return new User(nameField.getText(), idField.getText());
+                } catch (IllegalArgumentException e) {
+                    showAlert(Alert.AlertType.ERROR, "Lỗi đầu vào", e.getMessage());
+                    return null;
+                }
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(user -> {
+            try {
+                library.addUser(user);
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã thêm người dùng: " + user.getName());
+            } catch (IllegalArgumentException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", e.getMessage());
+            }
+        });
+    }
+
+    private void displayUsers() {
+        StringBuilder sb = new StringBuilder();
+        if (library.getUsers().isEmpty()) {
+            sb.append("Chưa có người dùng nào. Nhấn 'Thêm Người Dùng' để bắt đầu.");
+        } else {
+            for (User user : library.getUsers()) {
+                sb.append("Tên: ").append(user.getName())
+                        .append(" | Mã: ").append(user.getMemberId())
+                        .append(" | Số tài liệu mượn: ").append(user.getBorrowedCount())
+                        .append("\n");
+            }
+        }
+        showAlert(Alert.AlertType.INFORMATION, "Danh sách người dùng", sb.toString());
+    }
+
+    private void showDocumentDetails(Document doc) {
+        showAlert(Alert.AlertType.INFORMATION, "Thông tin tài liệu",
+                "Tiêu đề: " + doc.getTitle() + "\nTác giả: " + doc.getAuthor() +
+                        "\nSố lượng tổng: " + doc.getQuantity() +
+                        "\nSố lượng khả dụng: " + doc.getAvailableQuantity() +
+                        "\nĐang mượn: " + (doc.getBorrowedBy().isEmpty() ? "Không" : String.join(", ", doc.getBorrowedBy())));
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {
@@ -401,5 +471,9 @@ public class LibraryAppGUI extends Application {
         alert.setHeaderText(null);
         alert.setContentText(content);
         alert.showAndWait();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }
