@@ -5,6 +5,15 @@
     -fx-text-fill: #f0f0f0;
 }
 
+/* Bo tròn các góc của bảng */
+.table-view {
+    -fx-background-color: #36454F;
+    -fx-border-radius: 10px;
+    -fx-border-color: #bdc3c7;
+    -fx-border-width: 1px;
+    -fx-padding: 5px;
+}
+
 /* Nút - bo tròn, màu nổi bật */
 .button {
     -fx-background-color: linear-gradient(to bottom, #3c8dbc, #1c6ea4);
