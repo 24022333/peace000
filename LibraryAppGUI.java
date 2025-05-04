@@ -9,6 +9,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.util.Pair;
@@ -19,6 +20,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import java.io.InputStream;
 
 public class LibraryAppGUI extends Application {
     private Library library = new Library();
@@ -29,16 +31,6 @@ public class LibraryAppGUI extends Application {
 
         // Khởi tạo dữ liệu (không có dữ liệu mẫu)
         initializeSampleData();
-
-        // Tạo nút Success
-        Button btnSuccess = new Button("Hiển Thị Thông Báo Thành Công");
-
-        // Xử lý sự kiện khi bấm nút
-        btnSuccess.setOnAction(event -> {
-            // Gọi hộp thoại thành công
-            DialogBox.showSuccessDialog("Đây là thông báo thành công!");
-        });
-
 
         // Tạo bố cục chính
         BorderPane root = new BorderPane();
@@ -89,6 +81,7 @@ public class LibraryAppGUI extends Application {
         Button addUserButton = createStyledButton("Thêm Người Dùng");
         Button displayUserButton = createStyledButton("Hiện Người Dùng");
         Button exitButton = createStyledButton("Thoát");
+
 
         GridPane buttonGrid = new GridPane();
         buttonGrid.setHgap(30);
