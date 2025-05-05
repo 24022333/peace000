@@ -126,57 +126,58 @@ public class LibraryAppGUI extends Application {
 
     private Button createStyledButton(String text) {
         Button button = new Button(text);
-        button.setStyle("-fx-background-color: #3498db; "
+
+        // Khai báo biến style ngay trong phương thức
+        String defaultStyle = "-fx-background-color: #3498db; "
                 + "-fx-text-fill: white; "
                 + "-fx-font-size: 14px; "
                 + "-fx-padding: 10px; "
                 + "-fx-pref-width: 150px; "
-                + "-fx-border-color: #1F9C99; "
+                + "-fx-border-color: #ffffff; "
                 + "-fx-border-width: 2px; "
                 + "-fx-border-radius: 12px; "
-                + "-fx-background-radius: 12px; "); // Chỉ dùng dropshadow, bỏ glow
+                + "-fx-background-radius: 12px; "
+                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 3, 0.5, 0, 1);";
 
-        // Thêm hiệu ứng phóng to khi nhấn nút
+        String hoverStyle = "-fx-background-color: #2980b9; "
+                + "-fx-text-fill: white; "
+                + "-fx-font-size: 14px; "
+                + "-fx-padding: 10px; "
+                + "-fx-pref-width: 150px; "
+                + "-fx-border-color: #ffffff; "
+                + "-fx-border-width: 2px; "
+                + "-fx-border-radius: 12px; "
+                + "-fx-background-radius: 12px; "
+                + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 4, 0.5, 0, 1);";
+
+        button.setStyle(defaultStyle);
+
+        // Hover
+        button.setOnMouseEntered(e -> button.setStyle(hoverStyle));
+        button.setOnMouseExited(e -> button.setStyle(defaultStyle));
+
+        // Nhấn giữ nút
         button.setOnMousePressed(e -> {
             ScaleTransition scale = new ScaleTransition(Duration.millis(100), button);
-            scale.setToX(1.3);  // Phóng to theo trục X
-            scale.setToY(1.3);  // Phóng to theo trục Y
+            scale.setToX(1.3);
+            scale.setToY(1.3);
             scale.play();
         });
 
-        // Thêm hiệu ứng trở lại kích thước bình thường khi thả nút
+        // Nhả nút ra
         button.setOnMouseReleased(e -> {
             ScaleTransition scale = new ScaleTransition(Duration.millis(100), button);
-            scale.setToX(1);  // Trở lại kích thước bình thường
-            scale.setToY(1);  // Trở lại kích thước bình thường
+            scale.setToX(1);
+            scale.setToY(1);
+            scale.setOnFinished(event -> {
+                if (button.isHover()) {
+                    button.setStyle(hoverStyle);
+                } else {
+                    button.setStyle(defaultStyle);
+                }
+            });
             scale.play();
         });
-
-        // Thêm hiệu ứng hover
-        button.setOnMouseEntered(e -> {
-            button.setStyle("-fx-background-color: #2980b9; "
-                    + "-fx-text-fill: white; "
-                    + "-fx-font-size: 14px; "
-                    + "-fx-padding: 10px; "
-                    + "-fx-pref-width: 150px; "
-                    + "-fx-border-color: #1F9C99; "
-                    + "-fx-border-width: 2px; "
-                    + "-fx-border-radius: 12px; "
-                    + "-fx-background-radius: 12px;");
-        });
-
-        button.setOnMouseExited(e -> {
-            button.setStyle("-fx-background-color: #3498db; "
-                    + "-fx-text-fill: white; "
-                    + "-fx-font-size: 14px; "
-                    + "-fx-padding: 10px; "
-                    + "-fx-pref-width: 150px; "
-                    + "-fx-border-color: #1F9C99; "
-                    + "-fx-border-width: 2px; "
-                    + "-fx-border-radius: 12px; "
-                    + "-fx-background-radius: 12px;");
-        });
-
 
         return button;
     }
